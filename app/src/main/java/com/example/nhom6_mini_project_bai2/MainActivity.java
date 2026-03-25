@@ -15,6 +15,8 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.example.nhom6_mini_project_bai2.activities.LoginActivity;
 import com.example.nhom6_mini_project_bai2.activities.OrderActivity;
 import com.example.nhom6_mini_project_bai2.activities.ProductDetailActivity;
+import com.example.nhom6_mini_project_bai2.adapters.CategoryAdapter;
+import com.example.nhom6_mini_project_bai2.adapters.ProductAdapter;
 import com.example.nhom6_mini_project_bai2.dal.AppDatabase;
 import com.example.nhom6_mini_project_bai2.entities.Category;
 import com.example.nhom6_mini_project_bai2.entities.Order;
@@ -97,6 +99,40 @@ public class MainActivity extends AppCompatActivity {
             db.shoppingDao().insertUser(new User("admin", "123", "System Admin"));
             db.shoppingDao().insertUser(new User("user", "123", "Regular User"));
         }
+    }
+
+    private void loadData() {
+        List<Category> categories = db.shoppingDao().getAllCategories();
+        CategoryAdapter catAdapter = new CategoryAdapter(categories, (category, isSelected) -> {
+            if (isSelected) {
+                List<Product> filteredProducts = db.shoppingDao().getProductsByCategory(category.categoryId);
+                setProductAdapter(filteredProducts);
+            } else {
+                // Show all if deselected
+                setProductAdapter(db.shoppingDao().getAllProducts());
+            }
+        });
+        rvCategories.setAdapter(catAdapter);
+
+        List<Product> allProducts = db.shoppingDao().getAllProducts();
+        setProductAdapter(allProducts);
+    }
+
+    private void setProductAdapter(List<Product> products) {
+        ProductAdapter prodAdapter = new ProductAdapter(products, new ProductAdapter.OnProductClickListener() {
+            @Override
+            public void onProductClick(Product product) {
+                Intent intent = new Intent(MainActivity.this, ProductDetailActivity.class);
+                intent.putExtra("product_id", product.productId);
+                startActivity(intent);
+            }
+
+            @Override
+            public void onAddToCartClick(Product product) {
+                handleAddToCart(product);
+            }
+        });
+        rvProducts.setAdapter(prodAdapter);
     }
 
     private void handleAddToCart(Product product) {
